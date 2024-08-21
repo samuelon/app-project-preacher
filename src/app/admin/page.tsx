@@ -31,10 +31,11 @@ export default function Page() {
       // Parse the response body as JSON
       const data = await response.json();
       console.log('API Response:', response);
-      console.log('THIS IS THE DATA', data.base64Image);
+      //console.log('THIS IS THE DATA', data.base64Image);
 
       if (data && data.base64Image) {
         setBase64Image(data.base64Image);
+        console.log('THIS IS THE DATA', data.base64Image);
       } else {
         console.error('Base64 image string is missing in the response.');
       }
@@ -53,12 +54,36 @@ export default function Page() {
     }
   };
 
+  const handleSubmitFacebook = async (e: React.FormEvent<HTMLFormElement>) => {
+    //console.log(apiKey);
+    e.preventDefault();
+    const url = 'https://graph.facebook.com/v20.0/340070072532670/feed';
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    const data = {
+      message: 'Hello World, from Jack Preacher',
+      published: 'true',
+      access_token:
+        'EAAOWAzyu8HkBO5dfBBN6sZBCStmC8gcz8UWljuGE9BW1GSvVJe5ysYelosZBFDtmFxKhCNswWGa9Wfb3tntlaLuw9ZA4aoDMoP1PBDqEoRQZBcbKyq9ajns2K4bZBpOAuPsiFOJzFt09U1cD9h3qDy7JERzzTKCgP7ZAPeGFZANAD9mRFUYzfRQRh40OpoS8yvTgZAsUCl3sw42twRCtU84vHwZDZD'
+    };
+
+    try {
+      const response = await axios.post(url, data, { headers });
+      console.log(response.data);
+      alert('Successfully posted on facebook.');
+    } catch (error: any) {
+      console.error('Error calling ChatGPT API:', error.response ? error.response.data : error.message);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     //console.log(apiKey);
     e.preventDefault();
-    const imagePath = 'public/nails2jpeg.jpeg'; // Adjust the path if needed
-    console.log('Sending imagePath:', imagePath);
-    await handleEncodeImage(imagePath);
+    // const imagePath = 'public/nails2jpeg.jpeg'; // Adjust the path if needed
+    // console.log('Sending imagePath:', imagePath);
+    //await handleEncodeImage(imagePath);
     const url = 'https://api.openai.com/v1/chat/completions';
 
     const headers = {
@@ -85,7 +110,9 @@ export default function Page() {
       ],
       max_tokens: 300
     };
-
+    if (!file) {
+      return;
+    }
     try {
       const response = await axios.post(url, data, { headers });
       const result = response.data.choices[0].message.content;
@@ -109,11 +136,12 @@ export default function Page() {
         method: 'POST',
         body: data
       });
-
-      const imagePath = 'uploaded/' + file.name; // Adjust the path if needed
-      console.log('Sending imagePath:', imagePath);
-      await handleEncodeImage(imagePath);
       // handle the error
+      console.log(file.name);
+      const imagePath = 'public/uploaded-files/' + file.name; // Adjust the path if needed
+      console.log(imagePath);
+      //console.log('Sending imagePath:', imagePath);
+      await handleEncodeImage(imagePath);
       if (!res.ok) throw new Error(await res.text());
     } catch (e: any) {
       // Handle errors here
@@ -180,6 +208,13 @@ export default function Page() {
             <Image width={400} height={400} src={previewUrl} alt="Thumbnail Preview" />
           </div>
         )}
+      </div>
+      <div className="flex justify-center ">
+        <form onSubmit={handleSubmitFacebook}>
+          <button className="flex align-left m-5 btn hover:bg-blue-200 rounded-2xl" type="submit" value="Upload">
+            Post to Facebook.
+          </button>
+        </form>
       </div>
     </main>
   );
