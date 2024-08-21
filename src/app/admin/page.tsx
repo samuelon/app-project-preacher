@@ -16,6 +16,7 @@ export default function Page() {
   const [prompt, setPrompt] = useState<string>();
   const [response, setResponse] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [imagePath, setImagePath] = useState<string | null>(null);
   const [base64Image, setBase64Image] = useState('');
 
   const handleEncodeImage = async (imagePath: String) => {
@@ -62,7 +63,8 @@ export default function Page() {
       'Content-Type': 'application/json'
     };
     const data = {
-      message: 'Hello World, from Jack Preacher',
+      message: prompt,
+      url: imagePath,
       published: 'true',
       access_token:
         'EAAOWAzyu8HkBO5dfBBN6sZBCStmC8gcz8UWljuGE9BW1GSvVJe5ysYelosZBFDtmFxKhCNswWGa9Wfb3tntlaLuw9ZA4aoDMoP1PBDqEoRQZBcbKyq9ajns2K4bZBpOAuPsiFOJzFt09U1cD9h3qDy7JERzzTKCgP7ZAPeGFZANAD9mRFUYzfRQRh40OpoS8yvTgZAsUCl3sw42twRCtU84vHwZDZD'
@@ -116,8 +118,8 @@ export default function Page() {
     try {
       const response = await axios.post(url, data, { headers });
       const result = response.data.choices[0].message.content;
-      console.log();
       setResponse(JSON.stringify(result));
+      setPrompt(JSON.stringify(result));
       return result;
     } catch (error: any) {
       console.error('Error calling ChatGPT API:', error.response ? error.response.data : error.message);
@@ -137,8 +139,33 @@ export default function Page() {
         body: data
       });
       // handle the error
-      console.log(file.name);
       const imagePath = 'public/uploaded-files/' + file.name; // Adjust the path if needed
+      setImagePath(imagePath);
+      console.log(imagePath);
+      //console.log('Sending imagePath:', imagePath);
+      await handleEncodeImage(imagePath);
+      if (!res.ok) throw new Error(await res.text());
+    } catch (e: any) {
+      // Handle errors here
+      console.error(e);
+    }
+    alert('File uploaded!');
+  };
+  const onSubmitUpload = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // prevents any unwanted post request.
+    if (!file) return;
+
+    try {
+      const data = new FormData();
+      data.set('file', file);
+
+      const res = await fetch('/api/upload-s3', {
+        method: 'POST',
+        body: data
+      });
+      // handle the error
+      const imagePath = 'public/uploaded-files/' + file.name; // Adjust the path if needed
+      setImagePath(imagePath);
       console.log(imagePath);
       //console.log('Sending imagePath:', imagePath);
       await handleEncodeImage(imagePath);
@@ -164,7 +191,7 @@ export default function Page() {
           </div>
         </div>
       )}
-      <form onSubmit={onSubmit}>
+      <form onSubmit={onSubmitUpload}>
         <input type="file" name="file" onChange={handleFileChange} />
         <button className="btn hover:bg-blue-200 rounded-2xl" type="submit" value="Upload">
           Upload
@@ -194,11 +221,11 @@ export default function Page() {
       {/* <UploadPhoto /> */}
       <div>
         <h1>Generate Social Media Post</h1>
-        {/* <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit}>
           <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="Enter a prompt..." rows={4} cols={50} />
           <br />
           <button type="submit">Generate Post</button>
-        </form> */}
+        </form>
         {error && <p style={{ color: 'red' }}>{error}</p>}
 
         {response && (
