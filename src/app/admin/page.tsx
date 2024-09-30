@@ -18,6 +18,7 @@ export default function Page() {
   const [error, setError] = useState<string | null>(null);
   const [imagePath, setImagePath] = useState<string | null>(null);
   const [base64Image, setBase64Image] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
 
   const handleEncodeImage = async (imagePath: String) => {
     try {
@@ -116,6 +117,8 @@ export default function Page() {
       return;
     }
     try {
+      onSubmitRetrieve();
+      handleEncodeImage;
       const response = await axios.post(url, data, { headers });
       const result = response.data.choices[0].message.content;
       setResponse(JSON.stringify(result));
@@ -151,6 +154,22 @@ export default function Page() {
     }
     alert('File uploaded!');
   };
+  const onSubmitRetrieve = async () => {
+    if (!file) return;
+    try {
+      const res = await fetch('/api/retrieve-s3?file=' + file.name);
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        setImageUrl(url);
+      } else {
+        console.error('Failed to fetch image');
+      }
+    } catch (error) {
+      console.error('Error retrieving file:', error);
+    }
+  };
+
   const onSubmitUpload = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // prevents any unwanted post request.
     if (!file) return;
@@ -168,7 +187,7 @@ export default function Page() {
       setImagePath(imagePath);
       console.log(imagePath);
       //console.log('Sending imagePath:', imagePath);
-      await handleEncodeImage(imagePath);
+      await handleEncodeImage('https://jack-preacher-images.s3.amazonaws.com/Studio-Project-1.png');
       if (!res.ok) throw new Error(await res.text());
     } catch (e: any) {
       // Handle errors here
@@ -197,6 +216,12 @@ export default function Page() {
           Upload
         </button>
       </form>
+      {imageUrl && (
+        <div>
+          <h3>Fetched Image:</h3>
+          <img src={imageUrl} alt="Fetched from S3" style={{ maxWidth: '100%', height: 'auto' }} />
+        </div>
+      )}
       {/* <div className="flex justify-center ">
         <div>
           <FaFacebook size={50} />
@@ -215,6 +240,14 @@ export default function Page() {
         <form onSubmit={handleSubmit}>
           <button className="flex align-left m-5 btn hover:bg-blue-200 rounded-2xl" type="submit" value="Upload">
             Generate New Post
+          </button>
+        </form>
+      </div>
+
+      <div className="flex justify-center ">
+        <form onSubmit={onSubmitRetrieve}>
+          <button className="flex align-left m-5 btn hover:bg-blue-200 rounded-2xl" type="submit" value="Upload">
+            Retrieve file
           </button>
         </form>
       </div>
