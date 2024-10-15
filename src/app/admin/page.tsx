@@ -1,5 +1,4 @@
 'use client';
-import { FaFacebook, FaFileAlt, FaFileArchive, FaTwitter } from 'react-icons/fa';
 import { useState, ChangeEvent, FormEvent } from 'react';
 import Image from 'next/image';
 import axios from 'axios';
